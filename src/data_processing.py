@@ -151,18 +151,26 @@ class DataProcessor:
         return X
     
     def create_grade_categories(self, grades):
-        """Create grade categories from numerical grades"""
+        """Create numeric grade categories from numerical grades"""
         categories = []
         for grade in grades:
             if grade >= 16:
-                categories.append('Excellent')
+                categories.append(3)  # Excellent
             elif grade >= 12:
-                categories.append('Good')
+                categories.append(2)  # Good
             elif grade >= 8:
-                categories.append('Average')
+                categories.append(1)  # Average
             else:
-                categories.append('Poor')
+                categories.append(0)  # Poor
         return categories
+    
+    def numeric_to_string_categories(self, numeric_categories):
+        """Convert numeric categories back to string labels"""
+        category_map = {0: 'Poor', 1: 'Average', 2: 'Good', 3: 'Excellent'}
+        if isinstance(numeric_categories, (list, np.ndarray)):
+            return [category_map.get(cat, 'Unknown') for cat in numeric_categories]
+        else:
+            return category_map.get(numeric_categories, 'Unknown')
     
     def save_encoders(self, path='models/'):
         """Save label encoders and scaler"""

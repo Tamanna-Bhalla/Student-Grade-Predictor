@@ -71,12 +71,15 @@ class PredictionUtils:
             classification_pred = None
             classification_proba = None
             if 'rf_classification' in self.models:
-                classification_pred = self.models['rf_classification'].predict(X)[0]
+                numeric_pred = self.models['rf_classification'].predict(X)[0]
+                classification_pred = self.data_processor.numeric_to_string_categories(numeric_pred)
                 
                 # Get probabilities
                 proba = self.models['rf_classification'].predict_proba(X)[0]
                 classes = self.models['rf_classification'].classes_
-                classification_proba = dict(zip(classes, proba))
+                # Convert numeric classes to string labels for probabilities
+                string_classes = [self.data_processor.numeric_to_string_categories(cls) for cls in classes]
+                classification_proba = dict(zip(string_classes, proba))
             
             return regression_pred, classification_pred, classification_proba
             
@@ -100,12 +103,15 @@ class PredictionUtils:
             classification_pred = None
             classification_proba = None
             if 'xgb_classification' in self.models:
-                classification_pred = self.models['xgb_classification'].predict(X)[0]
+                numeric_pred = self.models['xgb_classification'].predict(X)[0]
+                classification_pred = self.data_processor.numeric_to_string_categories(numeric_pred)
                 
                 # Get probabilities
                 proba = self.models['xgb_classification'].predict_proba(X)[0]
                 classes = self.models['xgb_classification'].classes_
-                classification_proba = dict(zip(classes, proba))
+                # Convert numeric classes to string labels for probabilities
+                string_classes = [self.data_processor.numeric_to_string_categories(cls) for cls in classes]
+                classification_proba = dict(zip(string_classes, proba))
             
             return regression_pred, classification_pred, classification_proba
             
