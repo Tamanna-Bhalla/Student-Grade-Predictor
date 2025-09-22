@@ -1,0 +1,60 @@
+Create a full-featured, production-ready **"Student Grade Predictor"** web application using **Python, Streamlit, and Scikit-learn (or XGBoost/RandomForest)** with the following requirements:
+
+### Functionality
+1. **User Input Form**
+   - Collects student profile & academic data through a modern, user-friendly Streamlit interface.
+   - Fields include:
+     - Hours Studied per Week
+     - Attendance %
+     - Sleep Hours per Night
+     - Previous Scores %
+     - Tutoring Sessions per Week
+     - Parental Involvement (Low/Medium/High)
+     - Access to Resources (Low/Medium/High)
+     - Extracurricular Activities (Yes/No)
+     - Motivation Level (Low/Medium/High)
+     - Internet Access (Yes/No)
+     - Family Income (Low/Medium/High)
+     - Teacher Quality (Low/Medium/High)
+     - School Type (Public/Private)
+     - Peer Influence (Positive/Neutral/Negative)
+     - Physical Activity (0–5+)
+     - Learning Disabilities (Yes/No)
+     - Parental Education Level (High School/College/Postgraduate)
+     - Distance from Home (Near/Moderate/Far)
+     - Gender (Male/Female)
+   - Each field must have **tooltips/help text** for clarity.
+   - Robust input validation.
+
+2. **Model Integration**
+   - Preprocess categorical + numerical data consistently.
+   - Load trained models (`RandomForest` or `XGBoost`).
+   - Support **Regression** (predict final score %) and **Classification** (predict grade category).
+   - Use `joblib` for saving/loading models.
+   - Provide graceful handling of unseen labels.
+
+3. **Prediction Output**
+   - Show predicted score (%) with:
+     - Progress bar
+     - Color-coded status messages
+     - Icons (e.g., ✅, ⚠️, 🚨)
+   - If classification: show grade category (Excellent, Good, Average, Poor).
+   - Display **feature importance / explainability** (e.g., SHAP values or bar chart).
+   - Provide **actionable recommendations** (study more, get tutoring, improve sleep, etc.).
+   - Include a **Download Report** button (PDF/CSV) with prediction + recommendations.
+
+4. **App Styling**
+   - Use Streamlit’s theming options or custom CSS for polished UI.
+   - Organize form sections (Profile, Academics, Environment).
+   - Modern, responsive design.
+
+5. **Code Quality**
+   - Modular codebase with separate scripts:
+     - `data_processing.py` → preprocessing & encoders
+     - `model.py` → training & saving ML models
+     - `utils.py` → prediction helpers, SHAP explanations
+     - `streamlit_app.py` → Streamlit UI
+   - Proper error handling & logging.
+   - Clean, maintainable code.
+
+6. **Project Organization**
