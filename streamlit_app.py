@@ -384,6 +384,10 @@ elif page == "🎯 Make Prediction":
                 'health': health, 'absences': absences, 'G1': G1, 'G2': G2
             }
             
+            # Store in session state for use outside form
+            st.session_state.last_input_data = input_data
+            st.session_state.show_predictions = True
+            
             # Make predictions
             with st.spinner("🔄 Making predictions..."):
                 try:
@@ -393,133 +397,157 @@ elif page == "🎯 Make Prediction":
                     rf_pred, rf_class, rf_proba = prediction_utils.predict_random_forest(input_data)
                     xgb_pred, xgb_class, xgb_proba = prediction_utils.predict_xgboost(input_data)
                     
-                    # Display results
-                    st.markdown("---")
-                    st.header("🎯 Prediction Results")
-                    
-                    # Model comparison
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.subheader("🌲 Random Forest Prediction")
-                        
-                        # Grade prediction with progress bar
-                        if rf_pred is not None:
-                            st.metric("Predicted Grade", f"{rf_pred:.2f}/20")
-                            progress_rf = min(rf_pred / 20, 1.0)
-                        else:
-                            st.metric("Predicted Grade", "N/A")
-                            progress_rf = 0.0
-                        
-                        if rf_pred is not None and rf_pred >= 16:
-                            st.success(f"🎉 Excellent performance! ({rf_pred:.2f}/20)")
-                        elif rf_pred is not None and rf_pred >= 12:
-                            st.info(f"👍 Good performance ({rf_pred:.2f}/20)")
-                        elif rf_pred is not None and rf_pred >= 8:
-                            st.warning(f"⚠️ Average performance ({rf_pred:.2f}/20)")
-                        elif rf_pred is not None:
-                            st.error(f"🚨 Needs improvement ({rf_pred:.2f}/20)")
-                        
-                        st.progress(progress_rf)
-                        
-                        # Classification
-                        st.write(f"**Grade Category:** {rf_class}")
-                        if rf_proba is not None:
-                            max_prob = max(rf_proba.values())
-                            st.write(f"**Confidence:** {max_prob:.2%}")
-                    
-                    with col2:
-                        st.subheader("🚀 XGBoost Prediction")
-                        
-                        # Grade prediction with progress bar
-                        if xgb_pred is not None:
-                            st.metric("Predicted Grade", f"{xgb_pred:.2f}/20")
-                            progress_xgb = min(xgb_pred / 20, 1.0)
-                        else:
-                            st.metric("Predicted Grade", "N/A")
-                            progress_xgb = 0.0
-                        
-                        if xgb_pred is not None and xgb_pred >= 16:
-                            st.success(f"🎉 Excellent performance! ({xgb_pred:.2f}/20)")
-                        elif xgb_pred is not None and xgb_pred >= 12:
-                            st.info(f"👍 Good performance ({xgb_pred:.2f}/20)")
-                        elif xgb_pred is not None and xgb_pred >= 8:
-                            st.warning(f"⚠️ Average performance ({xgb_pred:.2f}/20)")
-                        elif xgb_pred is not None:
-                            st.error(f"🚨 Needs improvement ({xgb_pred:.2f}/20)")
-                        
-                        st.progress(progress_xgb)
-                        
-                        # Classification
-                        st.write(f"**Grade Category:** {xgb_class}")
-                        if xgb_proba is not None:
-                            max_prob = max(xgb_proba.values())
-                            st.write(f"**Confidence:** {max_prob:.2%}")
-                    
-                    # Feature importance and recommendations
-                    st.subheader("📊 Feature Importance & Explanations")
-                    
-                    try:
-                        # Get SHAP explanations
-                        shap_values = prediction_utils.get_shap_explanations(input_data)
-                        
-                        if shap_values is not None:
-                            # Display feature importance
-                            fig = prediction_utils.plot_feature_importance(shap_values, input_data)
-                            st.plotly_chart(fig, use_container_width=True)
-                    
-                    except Exception as e:
-                        st.warning(f"⚠️ Could not generate SHAP explanations: {str(e)}")
+                    # Store predictions in session state
+                    st.session_state.last_rf_pred = rf_pred
+                    st.session_state.last_rf_class = rf_class
+                    st.session_state.last_rf_proba = rf_proba
+                    st.session_state.last_xgb_pred = xgb_pred
+                    st.session_state.last_xgb_class = xgb_class
+                    st.session_state.last_xgb_proba = xgb_proba
                     
                     # Generate recommendations
-                    st.subheader("💡 Personalized Recommendations")
                     recommendations = prediction_utils.generate_recommendations(input_data, rf_pred)
-                    
-                    for i, rec in enumerate(recommendations, 1):
-                        st.write(f"{i}. {rec}")
-                    
-                    # Report generation
-                    st.subheader("📄 Generate Report")
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        if st.button("📋 Generate CSV Report", use_container_width=True):
-                            try:
-                                report_gen = st.session_state.report_generator
-                                csv_data = report_gen.generate_csv_report(
-                                    input_data, rf_pred, xgb_pred, rf_class, xgb_class, recommendations
-                                )
-                                
-                                st.download_button(
-                                    label="⬇️ Download CSV Report",
-                                    data=csv_data,
-                                    file_name=f"grade_prediction_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                                    mime="text/csv",
-                                    use_container_width=True
-                                )
-                            except Exception as e:
-                                st.error(f"❌ Error generating CSV report: {str(e)}")
-                    
-                    with col2:
-                        if st.button("📄 Generate PDF Report", use_container_width=True):
-                            try:
-                                report_gen = st.session_state.report_generator
-                                pdf_data = report_gen.generate_pdf_report(
-                                    input_data, rf_pred, xgb_pred, rf_class, xgb_class, recommendations
-                                )
-                                
-                                st.download_button(
-                                    label="⬇️ Download PDF Report",
-                                    data=pdf_data,
-                                    file_name=f"grade_prediction_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                                    mime="application/pdf",
-                                    use_container_width=True
-                                )
-                            except Exception as e:
-                                st.error(f"❌ Error generating PDF report: {str(e)}")
+                    st.session_state.last_recommendations = recommendations
                     
                 except Exception as e:
                     st.error(f"❌ Error making prediction: {str(e)}")
+                    st.session_state.show_predictions = False
+    
+    # Display predictions outside the form
+    if st.session_state.get('show_predictions', False) and 'last_input_data' in st.session_state:
+        input_data = st.session_state.last_input_data
+        rf_pred = st.session_state.get('last_rf_pred')
+        rf_class = st.session_state.get('last_rf_class')
+        rf_proba = st.session_state.get('last_rf_proba')
+        xgb_pred = st.session_state.get('last_xgb_pred')
+        xgb_class = st.session_state.get('last_xgb_class')
+        xgb_proba = st.session_state.get('last_xgb_proba')
+        recommendations = st.session_state.get('last_recommendations', [])
+        
+        # Display results
+        st.markdown("---")
+        st.header("🎯 Prediction Results")
+        
+        # Model comparison
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("🌲 Random Forest Prediction")
+            
+            # Grade prediction with progress bar
+            if rf_pred is not None:
+                st.metric("Predicted Grade", f"{rf_pred:.2f}/20")
+                progress_rf = float(min(rf_pred / 20, 1.0))
+            else:
+                st.metric("Predicted Grade", "N/A")
+                progress_rf = 0.0
+            
+            if rf_pred is not None and rf_pred >= 16:
+                st.success(f"🎉 Excellent performance! ({rf_pred:.2f}/20)")
+            elif rf_pred is not None and rf_pred >= 12:
+                st.info(f"👍 Good performance ({rf_pred:.2f}/20)")
+            elif rf_pred is not None and rf_pred >= 8:
+                st.warning(f"⚠️ Average performance ({rf_pred:.2f}/20)")
+            elif rf_pred is not None:
+                st.error(f"🚨 Needs improvement ({rf_pred:.2f}/20)")
+            
+            st.progress(progress_rf)
+            
+            # Classification
+            st.write(f"**Grade Category:** {rf_class}")
+            if rf_proba is not None:
+                max_prob = max(rf_proba.values())
+                st.write(f"**Confidence:** {max_prob:.2%}")
+        
+        with col2:
+            st.subheader("🚀 XGBoost Prediction")
+            
+            # Grade prediction with progress bar
+            if xgb_pred is not None:
+                st.metric("Predicted Grade", f"{xgb_pred:.2f}/20")
+                progress_xgb = float(min(xgb_pred / 20, 1.0))
+            else:
+                st.metric("Predicted Grade", "N/A")
+                progress_xgb = 0.0
+            
+            if xgb_pred is not None and xgb_pred >= 16:
+                st.success(f"🎉 Excellent performance! ({xgb_pred:.2f}/20)")
+            elif xgb_pred is not None and xgb_pred >= 12:
+                st.info(f"👍 Good performance ({xgb_pred:.2f}/20)")
+            elif xgb_pred is not None and xgb_pred >= 8:
+                st.warning(f"⚠️ Average performance ({xgb_pred:.2f}/20)")
+            elif xgb_pred is not None:
+                st.error(f"🚨 Needs improvement ({xgb_pred:.2f}/20)")
+            
+            st.progress(progress_xgb)
+            
+            # Classification
+            st.write(f"**Grade Category:** {xgb_class}")
+            if xgb_proba is not None:
+                max_prob = max(xgb_proba.values())
+                st.write(f"**Confidence:** {max_prob:.2%}")
+        
+        # Feature importance and recommendations
+        st.subheader("📊 Feature Importance & Explanations")
+        
+        try:
+            # Get SHAP explanations
+            prediction_utils = st.session_state.prediction_utils
+            shap_values = prediction_utils.get_shap_explanations(input_data)
+            
+            if shap_values is not None:
+                # Display feature importance
+                fig = prediction_utils.plot_feature_importance(shap_values, input_data)
+                st.plotly_chart(fig, use_container_width=True)
+        
+        except Exception as e:
+            st.warning(f"⚠️ Could not generate SHAP explanations: {str(e)}")
+        
+        # Generate recommendations
+        st.subheader("💡 Personalized Recommendations")
+        
+        for i, rec in enumerate(recommendations, 1):
+            st.write(f"{i}. {rec}")
+        
+        # Report generation (outside form)
+        st.subheader("📄 Generate Report")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("📋 Generate CSV Report", use_container_width=True):
+                try:
+                    report_gen = st.session_state.report_generator
+                    csv_data = report_gen.generate_csv_report(
+                        input_data, rf_pred, xgb_pred, rf_class, xgb_class, recommendations
+                    )
+                    
+                    st.download_button(
+                        label="⬇️ Download CSV Report",
+                        data=csv_data,
+                        file_name=f"grade_prediction_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"❌ Error generating CSV report: {str(e)}")
+        
+        with col2:
+            if st.button("📄 Generate PDF Report", use_container_width=True):
+                try:
+                    report_gen = st.session_state.report_generator
+                    pdf_data = report_gen.generate_pdf_report(
+                        input_data, rf_pred, xgb_pred, rf_class, xgb_class, recommendations
+                    )
+                    
+                    st.download_button(
+                        label="⬇️ Download PDF Report",
+                        data=pdf_data,
+                        file_name=f"grade_prediction_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"❌ Error generating PDF report: {str(e)}")
 
 elif page == "📈 Model Performance":
     # Model performance page
